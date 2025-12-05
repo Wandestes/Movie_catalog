@@ -1,162 +1,147 @@
-# catalog.py
-# Інтерактивний прототип "Каталог фільмів" (Лабораторна робота №3)
+# catalog.py (main.py)
+# Laboratory work #4 — integration with MySQL
 
 import sys
-
-movies = [
-    {
-        "id": 1,
-        "title": "Inception",
-        "year": 2010,
-        "genre": "Sci-Fi",
-        "rating": 8.8,
-        "description": "A thief who steals corporate secrets through dreams."
-    },
-    {
-        "id": 2,
-        "title": "Interstellar",
-        "year": 2014,
-        "genre": "Sci-Fi",
-        "rating": 8.6,
-        "description": "A team travels through a wormhole in search of a new home for humanity."
-    },
-    {
-        "id": 3,
-        "title": "The Matrix",
-        "year": 1999,
-        "genre": "Action",
-        "rating": 8.7,
-        "description": "A hacker discovers a simulated reality."
-    }
-]
-
+from db.movies_repository import (
+    get_all_movies,
+    search_movies,
+    get_movie_by_id,
+    add_movie,
+    delete_movie,
+    update_movie
+)
 
 def list_movies():
-    """Вивести список всіх фільмів"""
-    print("\n📃 Усі фільми:")
+    """Print all movies from DB"""
+    movies = get_all_movies()
+
+    print("\nAll movies:")
+    if not movies:
+        print("Catalog is empty.\n")
+        return
+
     for m in movies:
         print(f"{m['id']}. {m['title']} ({m['year']}) — {m['genre']} — ⭐ {m['rating']}")
     print()
 
 
 def search_movie():
-    """Пошук фільму за назвою"""
-    query = input("Введіть назву для пошуку: ").lower()
-    results = [m for m in movies if query in m["title"].lower()]
+    """Search movie by title in DB"""
+    query = input("Enter title to search: ").lower()
+    results = search_movies(query)
 
-    print("\n🔍 Результати пошуку:")
+    print("\nSearch results:")
     if results:
         for m in results:
             print(f"{m['id']}. {m['title']} — ⭐ {m['rating']}")
     else:
-        print("Нічого не знайдено.")
+        print("Nothing found.")
     print()
 
 
 def filter_by_genre():
-    """Фільтрація за жанром"""
-    genre = input("Введіть жанр: ").capitalize()
+    """Filter by genre (Python side)"""
+    genre = input("Enter genre: ").capitalize()
+    movies = get_all_movies()
     results = [m for m in movies if m["genre"] == genre]
 
-    print(f"\n🎭 Фільми жанру {genre}:")
+    print(f"\nMovies of genre {genre}:")
     if results:
         for m in results:
             print(f"{m['id']}. {m['title']} — ⭐ {m['rating']}")
     else:
-        print("Нічого не знайдено.")
+        print("Nothing found.\n")
     print()
 
 
 def show_movie_details():
-    """Показати деталі фільму"""
-    movie_id = int(input("Введіть ID фільму: "))
-    movie = next((m for m in movies if m["id"] == movie_id), None)
+    """Show movie details from DB"""
+    movie_id = int(input("Enter movie ID: "))
+    movie = get_movie_by_id(movie_id)
 
     if movie:
-        print("\n📌 Деталі фільму:")
-        print(f"Назва: {movie['title']}")
-        print(f"Рік: {movie['year']}")
-        print(f"Жанр: {movie['genre']}")
-        print(f"Рейтинг: {movie['rating']}")
-        print(f"Опис: {movie['description']}\n")
+        print("\nMovie details:")
+        print(f"Title: {movie['title']}")
+        print(f"Year: {movie['year']}")
+        print(f"Genre: {movie['genre']}")
+        print(f"Rating: {movie['rating']}")
+        print(f"Description: {movie['description']}\n")
     else:
-        print("Фільм не знайдено.\n")
+        print("Movie not found.\n")
 
 
-def add_movie():
-    """Додавання нового фільму"""
-    print("\n➕ Додати фільм")
-    title = input("Назва: ")
-    year = int(input("Рік: "))
-    genre = input("Жанр: ")
-    rating = float(input("Рейтинг: "))
-    description = input("Опис: ")
+def add_movie_ui():
+    """Add a new movie to MySQL"""
+    print("\nAdd movie")
+    title = input("Title: ")
+    year = int(input("Year: "))
+    genre = input("Genre: ")
+    rating = float(input("Rating: "))
+    description = input("Description: ")
 
-    new_id = max(m["id"] for m in movies) + 1
-
-    movies.append({
-        "id": new_id,
+    movie = {
         "title": title,
         "year": year,
         "genre": genre,
         "rating": rating,
-        "description": description
-    })
+        "description": description,
+    }
 
-    print("Фільм успішно додано!\n")
-
-
-def delete_movie():
-    """Видалення фільму"""
-    movie_id = int(input("Введіть ID фільму для видалення: "))
-    global movies
-    movies = [m for m in movies if m["id"] != movie_id]
-    print("Фільм видалено (якщо існував).\n")
+    add_movie(movie)
+    print("Movie successfully added!\n")
 
 
-def update_movie():
-    """Оновлення фільму"""
-    movie_id = int(input("ID фільму для оновлення: "))
-    movie = next((m for m in movies if m["id"] == movie_id), None)
+def delete_movie_ui():
+    """Delete movie from DB"""
+    movie_id = int(input("Enter movie ID to delete: "))
+    delete_movie(movie_id)
+    print("Movie deleted (if existed).\n")
+
+
+def update_movie_ui():
+    """Update movie in DB"""
+    movie_id = int(input("Movie ID to update: "))
+    movie = get_movie_by_id(movie_id)
 
     if not movie:
-        print("Фільм не знайдено.\n")
+        print("Movie not found.\n")
         return
 
-    print("\nОставте порожнім, щоб не змінювати поле.")
+    print("\nLeave empty to keep the field unchanged.")
 
-    new_title = input(f"Нова назва ({movie['title']}): ") or movie['title']
-    new_year = input(f"Новий рік ({movie['year']}): ")
+    new_title = input(f"New title ({movie['title']}): ") or movie['title']
+    new_year = input(f"New year ({movie['year']}): ")
     new_year = int(new_year) if new_year else movie['year']
-    new_genre = input(f"Новий жанр ({movie['genre']}): ") or movie['genre']
-    new_rating = input(f"Новий рейтинг ({movie['rating']}): ")
+    new_genre = input(f"New genre ({movie['genre']}): ") or movie['genre']
+    new_rating = input(f"New rating ({movie['rating']}): ")
     new_rating = float(new_rating) if new_rating else movie['rating']
-    new_description = input(f"Новий опис ({movie['description']}): ") or movie['description']
+    new_description = input(f"New description ({movie['description']}): ") or movie['description']
 
-    movie.update({
+    updated_movie = {
         "title": new_title,
         "year": new_year,
         "genre": new_genre,
         "rating": new_rating,
-        "description": new_description
-    })
+        "description": new_description,
+    }
 
-    print("Фільм оновлено!\n")
+    update_movie(movie_id, updated_movie)
+    print("Movie updated!\n")
 
 
 def main():
     while True:
-        print("========== КАТАЛОГ ФІЛЬМІВ ==========")
-        print("1. Показати всі фільми")
-        print("2. Пошук фільму")
-        print("3. Фільтрація за жанром")
-        print("4. Деталі фільму")
-        print("5. Додати фільм")
-        print("6. Видалити фільм")
-        print("7. Оновити фільм")
-        print("0. Вихід")
+        print("========== MOVIE CATALOG (MySQL) ==========")
+        print("1. Show all movies")
+        print("2. Search movie")
+        print("3. Filter by genre")
+        print("4. Movie details")
+        print("5. Add movie")
+        print("6. Delete movie")
+        print("7. Update movie")
+        print("0. Exit")
 
-        choice = input("Оберіть дію: ")
+        choice = input("Choose an action: ")
 
         if choice == "1":
             list_movies()
@@ -167,16 +152,16 @@ def main():
         elif choice == "4":
             show_movie_details()
         elif choice == "5":
-            add_movie()
+            add_movie_ui()
         elif choice == "6":
-            delete_movie()
+            delete_movie_ui()
         elif choice == "7":
-            update_movie()
+            update_movie_ui()
         elif choice == "0":
-            print("Вихід...")
+            print("Exiting...")
             sys.exit()
         else:
-            print("Невірний вибір!\n")
+            print("Invalid choice!\n")
 
 
 if __name__ == "__main__":
