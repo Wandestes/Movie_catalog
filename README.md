@@ -115,7 +115,7 @@
 - **Форматтер:** Black  
 - **Лінтер:** flake8 / pylint  
 - **Тестування:** pytest (ЛР5)  
-- **База даних:** SQLite / PostgreSQL (ЛР4)  
+- **База даних:** MySQL (ЛР4)  
 - **Розгортання:** GitHub Actions + Render / Railway / Vercel (для API) (ЛР6)
 
 ---
