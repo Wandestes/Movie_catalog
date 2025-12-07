@@ -5,8 +5,8 @@
   "devDependencies": {
     "prettier": "^3.1.0"
   },
- "scripts": {
-  "format:check": "prettier --check .",
-  "format:fix": "prettier --write ."
-}
+  "scripts": {
+    "format:check": "prettier --check .",
+    "format:fix": "prettier --write ."
+  }
 }
