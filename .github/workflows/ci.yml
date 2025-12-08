@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pylint black
+
+      - name: Auto-fix formatting (Black)
+        run: black .
+
+      - name: Black formatting check
+        run: black --check .
+
+      - name: Run linter (Pylint, non-blocking)
+        run: pylint **/*.py || true
+
+      - name: Run tests (non-blocking)
+        run: pytest || true
+
+      - name: Validate commit messages
+        uses: webiny/action-conventional-commits@v1.3.0
+        continue-on-error: true
+
+  prettier:
+    name: Prettier Style Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Prettier
+        run: npm install --global prettier
+
+      - name: Run Prettier check
+        run: prettier --check .

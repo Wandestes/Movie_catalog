@@ -1,0 +1,12 @@
+{
+  "name": "movie-catalog",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.1.0"
+  },
+  "scripts": {
+    "format:check": "prettier --check .",
+    "format:fix": "prettier --write ."
+  }
+}

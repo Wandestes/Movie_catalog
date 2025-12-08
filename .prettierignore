@@ -1,0 +1,17 @@
+env/
+env1/
+venv/
+.venv/
+**/site-packages/**
+**/Lib/**
+__pycache__/
+*.py
+*.pyc
+*.db
+db/
+tests/
+.vscode/
+.vs/
+.github/
+README.md
+*.md

@@ -1,0 +1,9 @@
+site_name: Movie Catalog Documentation
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Catalog: catalog.md
+  - API: api.md
+  - Tests: tests.md

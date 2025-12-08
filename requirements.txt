@@ -3,3 +3,5 @@ flake8
 isort
 pytest
 pre-commit
+pytest-mock
+mysql-connector-python
