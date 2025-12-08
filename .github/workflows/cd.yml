@@ -1,24 +1,31 @@
-name: Deploy Movie Catalog to GitHub Pages
+name: Deploy Pages
 
 on:
   push:
-    branches:
-      - main  
-
-permissions:
-  contents: write   
-  pages: write
+    branches: [ "main" ]
 
 jobs:
   deploy:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./   
+      - name: Build
+        run: |
+          mkdir public
+          echo "Hello world" > public/index.html
+
+      - name: Deploy
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+
+      - uses: actions/deploy-pages@v4
