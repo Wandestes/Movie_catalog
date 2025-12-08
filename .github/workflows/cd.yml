@@ -13,19 +13,40 @@ jobs:
 
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Build
+      - name: Build site
         run: |
-          mkdir public
-          echo "Hello world" > public/index.html
+          mkdir -p public
+          echo "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <title>Movie Catalog — GitHub Pages</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 40px; text-align: center; }
+        .box { background: white; padding: 30px; border-radius: 12px; width: 480px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1 { margin-top: 0; }
+        a { display: inline-block; margin-top: 20px; padding: 10px 20px; border-radius: 8px; background: #0078ff; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class='box'>
+    <h1>Movie Catalog</h1>
+    <p>This GitHub Pages site is used for the Movie Catalog project.</p>
+    <a href='https://github.com/Wandestes/Movie_catalog'>View project on GitHub</a>
+</div>
+</body>
+</html>" > public/index.html
 
-      - name: Deploy
-        id: deployment
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
 
-      - uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
