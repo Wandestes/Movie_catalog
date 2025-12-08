@@ -1,26 +1,41 @@
-name: CD
+name: CD – Deploy to Stage Server
 
 on:
   push:
     branches:
-      - main
+      - main    
 
 jobs:
   deploy:
+    name: Deploy to Stage Server
     runs-on: ubuntu-latest
 
+    needs: []   
+
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to server via SSH
+      - name: Connect and deploy via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            echo "---- Switching to project folder ----"
             cd /var/www/movie_project
+
+            echo "---- Pull latest code ----"
             git pull origin main
+
+            echo "---- Update dependencies ----"
+            source venv/bin/activate || python3 -m venv venv && source venv/bin/activate
             pip install -r requirements.txt
-            systemctl restart movie_service
+
+            echo "---- Apply migrations (optional) ----"
+
+            echo "---- Restart service ----"
+            sudo systemctl restart movie_service
+
+            echo "---- Deployment completed! ----"
