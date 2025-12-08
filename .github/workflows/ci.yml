@@ -25,6 +25,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pylint black
 
+      - name: Auto-fix formatting (Black)
+        run: black .
+
       - name: Black formatting check
         run: black --check .
 
