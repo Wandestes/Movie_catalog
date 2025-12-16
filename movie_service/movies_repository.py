@@ -1,5 +1,5 @@
 # db/movies_repository.py
-from db.connection import get_connection
+from .connection import get_connection
 
 
 TABLE_NAME = "movies" 
