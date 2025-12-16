@@ -1,5 +1,4 @@
-# db/movies_repository.py
-from .connection import get_connection
+﻿from .connection import get_connection
 
 
 TABLE_NAME = "movies" 
@@ -21,17 +20,30 @@ def search_movies(query):
     conn = get_connection()
     if conn is None:
         return []
-    cursor = conn.cursor(dictionary=True)
-    
-    cursor.execute(
-        f"SELECT * FROM {TABLE_NAME} WHERE LOWER(title) LIKE %s",
-        (f"%{query.lower()}%",)
-    )
-    
-    movies = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return movies
+    try:
+        cursor = conn.cursor(dictionary=True)
+        
+        # --- ОНОВЛЕНО: ПОШУК ЗА TITLE АБО DESCRIPTION ---
+        search_param = f"%{query.lower()}%"
+        
+        sql_query = f"""
+        SELECT * FROM {TABLE_NAME} 
+        WHERE LOWER(title) LIKE %s OR LOWER(description) LIKE %s;
+        """
+        
+        cursor.execute(sql_query, (search_param, search_param))
+        
+        movies = cursor.fetchall()
+        return movies
+    except Exception as e:
+        print(f"Database error during search: {e}")
+        return []
+    finally:
+        # Безпечне закриття
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 def get_movie_by_id(movie_id):
     conn = get_connection()
@@ -52,13 +64,13 @@ def add_movie(movie):
     if conn is None:
         return False
     cursor = conn.cursor()
-    
 
     try:
         cursor.execute(
             f"""INSERT INTO {TABLE_NAME} (title, year, genre, rating, description)
-               VALUES (%s, %s, %s, %s, %s)""",
+                VALUES (%s, %s, %s, %s, %s)""",
             (movie["title"], movie["year"], movie["genre"], movie["rating"], movie["description"])
+            # Тут немає movie_id!
         )
         conn.commit()
         return True
@@ -95,9 +107,11 @@ def update_movie(movie_id, movie):
     
 
     try:
+        # ВИПРАВЛЕНО: Один рядок без переносів для коректної роботи Mock
+        sql = f"UPDATE {TABLE_NAME} SET title=%s, year=%s, genre=%s, rating=%s, description=%s WHERE id=%s"
+        
         cursor.execute(
-            f"""UPDATE {TABLE_NAME} SET title=%s, year=%s, genre=%s, rating=%s, description=%s 
-               WHERE id=%s""",
+            sql, # ВИКОРИСТОВУЄМО ОДИН РЯДОК
             (movie["title"], movie["year"], movie["genre"], movie["rating"], movie["description"], movie_id)
         )
         conn.commit()

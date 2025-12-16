@@ -1,25 +1,29 @@
 ﻿from flask import Blueprint, jsonify, request
-# Імпортуємо функції з нашого репозиторію
-import movie_service.movies_repository as movie_repo 
+import movie_service.movies_repository as movie_repo
+from movie_service.validation import validate_movie_data
 
 movies_bp = Blueprint('movies', __name__, url_prefix='/api/v1')
 
 @movies_bp.route('/movies', methods=['GET'])
 def get_movies_list():
-    """ 1. Отримати список усіх фільмів або виконати пошук """
-    query = request.args.get('q') 
+    # Отримуємо параметр запиту 'query'
+    query = request.args.get('query') 
     
     if query:
+        # Якщо є параметр пошуку, викликаємо search_movies
         movies = movie_repo.search_movies(query)
     else:
-        # Тут можна додати пагінацію, але для початку використовуємо all
+        # Інакше повертаємо всі фільми
         movies = movie_repo.get_all_movies()
         
-    return jsonify(movies)
+    if movies is None:
+        # Обробка помилки підключення, якщо репозиторій повертає None (хоча у вашій реалізації повертається [])
+        return jsonify({"message": "Database connection error"}), 500
+
+    return jsonify(movies), 200
 
 @movies_bp.route('/movies/<int:movie_id>', methods=['GET'])
 def get_movie(movie_id):
-    """ 2. Отримати деталі конкретного фільму """
     movie = movie_repo.get_movie_by_id(movie_id)
     if movie:
         return jsonify(movie)
@@ -27,16 +31,38 @@ def get_movie(movie_id):
 
 @movies_bp.route('/movies', methods=['POST'])
 def add_new_movie():
-    """ 3. Додати новий фільм у каталог (потрібна авторизація адміна) """
     data = request.json
     
-    # *Важливо*: У реальному проєкті тут має бути перевірка,
-    # чи авторизований користувач є адміністратором!
+    is_valid, error_msg = validate_movie_data(data)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
     
-    if not all(k in data for k in ("title", "year", "genre", "rating")):
-        return jsonify({"message": "Missing required fields (title, year, genre, rating)"}), 400
-        
     if movie_repo.add_movie(data):
-        # 201 Created
         return jsonify({"message": "Movie added successfully", "movie": data}), 201
     return jsonify({"message": "Failed to add movie due to DB error"}), 500
+
+@movies_bp.route('/movies/<int:movie_id>', methods=['PUT'])
+def update_movie_route(movie_id):
+    data = request.json
+
+    if data is None:
+        return jsonify({"error": "No JSON data provided"}), 400
+
+    is_valid, error_msg = validate_movie_data(data)
+    if not is_valid:
+        return jsonify({"error": error_msg}), 400
+
+    # ВИКОРИСТОВУЄМО movie_repo
+    if movie_repo.update_movie(movie_id, data):
+        return jsonify({"message": f"Movie with ID {movie_id} updated successfully"}), 200
+    else:
+        return jsonify({"error": f"Failed to update movie with ID {movie_id}. Movie not found or database error."}), 404
+
+@movies_bp.route('/movies/<int:movie_id>', methods=['DELETE'])
+def delete_movie_route(movie_id):
+
+    # ВИКОРИСТОВУЄМО movie_repo
+    if movie_repo.delete_movie(movie_id):
+        return jsonify({"message": f"Movie with ID {movie_id} deleted successfully"}), 200
+    else:
+        return jsonify({"error": f"Failed to delete movie with ID {movie_id}. Movie not found or database error."}), 404
