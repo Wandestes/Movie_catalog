@@ -1,37 +1,33 @@
-﻿# movie_service/app.py
-
-from flask import Flask
-from movie_service.routes import movies_bp # Імпортуємо наш Blueprint
+﻿import sys
 import os
+from flask import Flask
 
-# Створюємо функцію-фабрику додатків
-def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
+# Adding root directory to sys.path to ensure cross-module imports work
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-    # Налаштування конфігурації
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-        # Тут можуть бути інші налаштування, наприклад, для бази даних
-    )
+from movie_service.routes import movies_bp
+try:
+    from user_service.routes import users_bp
+except ImportError as e:
+    print(f"Import Error: {e}")
+    users_bp = None
 
-    if test_config is None:
-        # Завантажити конфігурацію, якщо вона існує, під час не-тестового запуску
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # Завантажити тестову конфігурацію
-        app.config.from_mapping(test_config)
+def create_app(config=None):
+    app = Flask(__name__)
 
-    # Переконатися, що папка instance існує
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
+    if config:
+        app.config.update(config)
 
+    # Registering blueprints
     app.register_blueprint(movies_bp)
+    
+    if users_bp:
+        app.register_blueprint(users_bp)
+    else:
+        print("Warning: users_bp not registered due to import error")
 
     return app
 
 if __name__ == '__main__':
     app = create_app()
-    print("Movie Service ?????? ?? ????? 5001...")
-    app.run(debug=True, port=5001)
+    app.run(debug=True)

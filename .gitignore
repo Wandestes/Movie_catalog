@@ -16,6 +16,7 @@ build/
 /env
 .venv
 .idea/
+instance/
 
 # Файли журналів (логів) та тестування
 *.log
